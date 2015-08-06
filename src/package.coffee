@@ -6,7 +6,6 @@ async = require 'async'
 CSON = require 'season'
 fs = require 'fs-plus'
 {Emitter, CompositeDisposable} = require 'event-kit'
-Q = require 'q'
 {includeDeprecatedAPIs, deprecate} = require 'grim'
 
 ModuleCache = require './module-cache'
@@ -138,20 +137,21 @@ class Package
 
   activate: ->
     @grammarsPromise ?= @loadGrammars()
+    @activationPromise ?=
+      new Promise (resolve, reject) =>
+        @resolveActivationPromise = resolve
+        @rejectActivationPromise = reject
+        @measure 'activateTime', =>
+          try
+            @activateResources()
+            if @activationShouldBeDeferred()
+              @subscribeToDeferredActivation()
+            else
+              @activateNow()
+          catch error
+            @handleError("Failed to activate the #{@name} package", error)
 
-    unless @activationDeferred?
-      @activationDeferred = Q.defer()
-      @measure 'activateTime', =>
-        try
-          @activateResources()
-          if @activationShouldBeDeferred()
-            @subscribeToDeferredActivation()
-          else
-            @activateNow()
-        catch error
-          @handleError("Failed to activate the #{@name} package", error)
-
-    Q.all([@grammarsPromise, @settingsPromise, @activationDeferred.promise])
+    Promise.all([@grammarsPromise, @settingsPromise, @activationPromise])
 
   activateNow: ->
     try
@@ -164,7 +164,7 @@ class Package
     catch error
       @handleError("Failed to activate the #{@name} package", error)
 
-    @activationDeferred?.resolve()
+    @resolveActivationPromise?()
 
   activateConfig: ->
     return if @configActivated
@@ -344,7 +344,7 @@ class Package
     @grammarsActivated = true
 
   loadGrammars: ->
-    return Q() if @grammarsLoaded
+    return Promise.resolve() if @grammarsLoaded
 
     loadGrammar = (grammarPath, callback) =>
       atom.grammars.readGrammar grammarPath, (error, grammar) =>
@@ -359,14 +359,13 @@ class Package
           grammar.activate() if @grammarsActivated
         callback()
 
-    deferred = Q.defer()
-    grammarsDirPath = path.join(@path, 'grammars')
-    fs.exists grammarsDirPath, (grammarsDirExists) ->
-      return deferred.resolve() unless grammarsDirExists
+    new Promise (resolve) =>
+      grammarsDirPath = path.join(@path, 'grammars')
+      fs.exists grammarsDirPath, (grammarsDirExists) ->
+        return resolve() unless grammarsDirExists
 
-      fs.list grammarsDirPath, ['json', 'cson'], (error, grammarPaths=[]) ->
-        async.each grammarPaths, loadGrammar, -> deferred.resolve()
-    deferred.promise
+        fs.list grammarsDirPath, ['json', 'cson'], (error, grammarPaths=[]) ->
+          async.each grammarPaths, loadGrammar, -> resolve()
 
   loadSettings: ->
     @settings = []
@@ -382,20 +381,18 @@ class Package
           settings.activate() if @settingsActivated
         callback()
 
-    deferred = Q.defer()
+    new Promise (resolve) =>
+      if fs.isDirectorySync(path.join(@path, 'scoped-properties'))
+        settingsDirPath = path.join(@path, 'scoped-properties')
+        deprecate("Store package settings files in the `settings/` directory instead of `scoped-properties/`", packageName: @name)
+      else
+        settingsDirPath = path.join(@path, 'settings')
 
-    if fs.isDirectorySync(path.join(@path, 'scoped-properties'))
-      settingsDirPath = path.join(@path, 'scoped-properties')
-      deprecate("Store package settings files in the `settings/` directory instead of `scoped-properties/`", packageName: @name)
-    else
-      settingsDirPath = path.join(@path, 'settings')
+      fs.exists settingsDirPath, (settingsDirExists) ->
+        return resolve() unless settingsDirExists
 
-    fs.exists settingsDirPath, (settingsDirExists) ->
-      return deferred.resolve() unless settingsDirExists
-
-      fs.list settingsDirPath, ['json', 'cson'], (error, settingsPaths=[]) ->
-        async.each settingsPaths, loadSettingsFile, -> deferred.resolve()
-    deferred.promise
+        fs.list settingsDirPath, ['json', 'cson'], (error, settingsPaths=[]) ->
+          async.each settingsPaths, loadSettingsFile, -> resolve()
 
   serialize: ->
     if @mainActivated
@@ -405,8 +402,10 @@ class Package
         console.error "Error serializing package '#{@name}'", e.stack
 
   deactivate: ->
-    @activationDeferred?.reject()
-    @activationDeferred = null
+    @rejectActivationPromise?()
+    @activationPromise = null
+    @resolveActivationPromise = null
+    @rejectActivationPromise = null
     @activationCommandSubscriptions?.dispose()
     @deactivateResources()
     @deactivateConfig()
