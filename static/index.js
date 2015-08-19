@@ -103,6 +103,19 @@ var setupCoffeeCache = function(cacheDir) {
   CoffeeCache.register();
 }
 
+var isPortableMode = function() {
+  // No portable mode on non-Windows
+  if (process.platform !== 'win32') return false;
+  
+  // DevMode? Nope
+  var devMode = loadSettings.devMode || !loadSettings.resourcePath.startsWith(process.resourcesPath + path.sep);
+  if (devMode) return false;
+  
+  // Compare our EXE's path to where it would normally be in an installed app
+  var ourPath = process.execPath.toLowerCase();
+  return (ourPath.indexOf(process.env.USERPROFILE.toLowerCase()) === 0);
+}
+
 var setupAtomHome = function() {
   if (!process.env.ATOM_HOME) {
     var home;
@@ -115,7 +128,11 @@ var setupAtomHome = function() {
     try {
       atomHome = fs.realpathSync(atomHome);
     } catch (error) {
-      // Ignore since the path might just not exist yet.
+      // If we're in portable mode *and* the user doesn't already have a .atom
+      // folder in the normal place, we'll use the portable folder instead
+      if (isPortableMode()) {
+        atomHome = path.join(path.dirname(process.execPath), '.atom');
+      }
     }
     process.env.ATOM_HOME = atomHome;
   }
