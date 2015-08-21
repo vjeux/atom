@@ -108,7 +108,9 @@ var isPortableMode = function() {
   if (process.platform !== 'win32') return false;
   
   // DevMode? Nope
-  var devMode = loadSettings.devMode || !loadSettings.resourcePath.startsWith(process.resourcesPath + path.sep);
+  var devMode = loadSettings && 
+    (loadSettings.devMode || !loadSettings.resourcePath.startsWith(process.resourcesPath + path.sep));
+
   if (devMode) return false;
   
   // Compare our EXE's path to where it would normally be in an installed app
