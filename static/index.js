@@ -113,7 +113,7 @@ var isPortableMode = function() {
   
   // Compare our EXE's path to where it would normally be in an installed app
   var ourPath = process.execPath.toLowerCase();
-  return (ourPath.indexOf(process.env.USERPROFILE.toLowerCase()) === 0);
+  return (ourPath.indexOf(process.env.LOCALAPPDATA.toLowerCase()) === 0);
 }
 
 var setupAtomHome = function() {
