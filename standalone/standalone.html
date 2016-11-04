@@ -1,0 +1,384 @@
+<body>
+<link rel="stylesheet" href="styles.css"></link>
+<script src="cache.js"></script>
+<script>
+__CACHE['fs'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    resolve: function() {},
+    getHomeDirectory: function() {},
+    existsSync: function() {},
+    makeTreeSync: function() {},
+    traverseTree: function() {},
+    resolveOnLoadPath: function() { return '/resolveOnLoadPath/resolveOnLoadPath.js'; },
+    readFileSync: function() { return ''; },
+    writeFileSync: function() {},
+    isDirectorySync: function() {},  
+    listSync: function() { return []; },  
+    isFileSync: function() {},
+  };
+}.toString();
+
+__CACHE['crypto'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    createHash: function() {
+      var _str = null;
+      var digest = function() {
+        return '###' + _str;
+      }
+      return {
+        update: function(str) {
+          _str = str;
+          return {
+            digest: digest
+          }
+        },
+        digest: digest
+      }
+    }
+  };
+}.toString();
+
+__CACHE['module'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    globalPaths: [],
+  };
+}.toString();
+
+__CACHE['child_process'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['electron'] = function (exports, require, module, __filename, __dirname, process, global) {
+  var listeners = {};
+
+  var handlers = {};
+
+  function registerGetterSetter(action, ...initialValue) {
+    var value = initialValue;
+    handlers['set-' + action] = function(...args) {
+      value = args;
+      dispatch('ipc-helpers-set-' + action + '-response', ...value);
+    }
+    handlers['get-' + action] = function(...args) {
+      value = args;
+      dispatch('ipc-helpers-get-' + action + '-response', ...value);
+    }
+  }
+
+  function registerMethod(action, value) {
+    handlers[action] = function(...args) {
+      dispatch('ipc-helpers-' + action + '-response', value);
+    }
+  }
+
+  var temporaryWindowState = '{"version":1,"project":{"deserializer":"Project","paths":[],"buffers":[{"id":"118017ce453321af3b41bd5ece2d8413","text":"","defaultMarkerLayerId":"34","markerLayers":{"1":{"id":"1","maintainHistory":false,"persistent":true,"markersById":{},"version":2},"3":{"id":"3","maintainHistory":true,"persistent":true,"markersById":{"1":{"range":{"start":{"row":0,"column":0},"end":{"row":0,"column":0}},"properties":{},"reversed":false,"tailed":false,"valid":true,"invalidate":"never"}},"version":2},"4":{"id":"4","maintainHistory":false,"persistent":true,"markersById":{},"version":2}},"displayLayers":{"0":{"id":0,"foldsMarkerLayerId":"1"}},"nextMarkerLayerId":40,"nextDisplayLayerId":1,"history":{"version":5,"nextCheckpointId":1,"undoStack":[],"redoStack":[],"maxUndoEntries":10000},"encoding":"utf8","preferredLineEnding":"\\n","nextMarkerId":2}]},"workspace":{"deserializer":"Workspace","paneContainer":{"deserializer":"PaneContainer","version":1,"root":{"deserializer":"Pane","id":3,"items":[{"deserializer":"TextEditor","version":1,"displayBuffer":{"tokenizedBuffer":{"deserializer":"TokenizedBuffer","bufferId":"118017ce453321af3b41bd5ece2d8413","tabLength":2,"largeFileMode":false}},"tokenizedBuffer":{"deserializer":"TokenizedBuffer","bufferId":"118017ce453321af3b41bd5ece2d8413","tabLength":2,"largeFileMode":false},"displayLayerId":0,"selectionsMarkerLayerId":"3","firstVisibleScreenRow":0,"firstVisibleScreenColumn":0,"atomicSoftTabs":true,"softWrapHangingIndentLength":0,"id":4,"softTabs":true,"softWrapped":false,"softWrapAtPreferredLineLength":false,"preferredLineLength":80,"mini":false,"width":881,"largeFileMode":false,"registered":true,"invisibles":{"eol":"¬","space":"·","tab":"»","cr":"¤"},"showInvisibles":false,"showIndentGuide":false,"autoHeight":false}],"itemStackIndices":[0],"activeItemIndex":0,"focused":false,"flexScale":1},"activePaneId":3},"packagesWithActiveGrammars":["language-hyperlink","language-todo"],"destroyedItemURIs":[]},"packageStates":{"bookmarks":{"4":{"markerLayerId":"4"}},"fuzzy-finder":{},"metrics":{"sessionLength":42118},"tree-view":{"directoryExpansionStates":{},"hasFocus":false,"attached":false,"scrollLeft":0,"scrollTop":0,"width":0}},"grammars":{"grammarOverridesByPath":{}},"fullScreen":false,"windowDimensions":{"x":130,"y":45,"width":918,"height":760,"maximized":false},"textEditors":{"editorGrammarOverrides":{}}}';
+  registerGetterSetter('temporary-window-state', temporaryWindowState);
+  registerGetterSetter('window-size');
+  registerGetterSetter('window-position');
+  registerMethod('window-method');
+  registerMethod('show-window');
+  registerMethod('focus-window');
+
+  function dispatch(action, ...args) {
+    console.info('dispatch', action, ...args, listeners[action]);
+    (listeners[action] || []).forEach(function(listener) {
+      listener(action, ...args);
+    })
+  }
+  module.exports = {
+    ipcRenderer: {
+      on: function(action, cb) {
+        if (!listeners[action]) {
+          listeners[action] = [];
+        }
+        listeners[action].push(cb);
+        console.info('Register IPC listener', action);
+        if (action === 'ipc-helpers-get-temporary-window-state-response') {
+          dispatch('ipc-helpers-get-temporary-window-state-response', temporaryWindowState);
+        }
+      },
+      send: function(action, ...args) {
+        var handler = handlers[action];
+        if (!handler) {
+          console.warn('Ignored IPC call', action, ...args);
+          return;
+        }
+        console.log('Received IPC call', action, ...args);
+        handler(...args)
+      },
+      removeAllListeners: function(action) {
+        console.log('Unregister IPC', action);
+        delete listeners[action];
+      }
+    },
+    remote: {
+      getCurrentWindow: function() {
+        return {
+          on: function() {},
+          isFullScreen: function() {},
+          getPosition() { return [0, 0]; },
+          getSize() { return [800, 600]; },
+          isMaximized() {},
+        }
+      },
+    },
+    webFrame: {
+      setZoomLevelLimits: function() {},
+    },
+    screen: {
+      on: function() {
+
+      }
+    },
+  };
+}.toString();
+
+
+__CACHE['path'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    join: function(a, b, c) {
+      var res = a;
+      if (b) {
+        res += '/' + b;
+      }
+      if (c) {
+        res += '/' + c;
+      }
+      return res;
+    },
+    dirname: dirname,
+    basename: basename,
+    extname: function(str) { return str.replace(/\[^\.]+\./g, ''); },
+  };
+}.toString();
+
+__CACHE['underscore-plus'] = function (exports, require, module, __filename, __dirname, process, global) {
+(function(){function n(n){function t(t,r,e,u,i,o){for(;i>=0&&o>i;i+=n){var a=u?u[i]:i;e=r(e,t[a],a,t)}return e}return function(r,e,u,i){e=b(e,i,4);var o=!k(r)&&m.keys(r),a=(o||r).length,c=n>0?0:a-1;return arguments.length<3&&(u=r[o?o[c]:c],c+=n),t(r,e,u,o,c,a)}}function t(n){return function(t,r,e){r=x(r,e);for(var u=O(t),i=n>0?0:u-1;i>=0&&u>i;i+=n)if(r(t[i],i,t))return i;return-1}}function r(n,t,r){return function(e,u,i){var o=0,a=O(e);if("number"==typeof i)n>0?o=i>=0?i:Math.max(i+a,o):a=i>=0?Math.min(i+1,a):i+a+1;else if(r&&i&&a)return i=r(e,u),e[i]===u?i:-1;if(u!==u)return i=t(l.call(e,o,a),m.isNaN),i>=0?i+o:-1;for(i=n>0?o:a-1;i>=0&&a>i;i+=n)if(e[i]===u)return i;return-1}}function e(n,t){var r=I.length,e=n.constructor,u=m.isFunction(e)&&e.prototype||a,i="constructor";for(m.has(n,i)&&!m.contains(t,i)&&t.push(i);r--;)i=I[r],i in n&&n[i]!==u[i]&&!m.contains(t,i)&&t.push(i)}var u=this,i=u._,o=Array.prototype,a=Object.prototype,c=Function.prototype,f=o.push,l=o.slice,s=a.toString,p=a.hasOwnProperty,h=Array.isArray,v=Object.keys,g=c.bind,y=Object.create,d=function(){},m=function(n){return n instanceof m?n:this instanceof m?void(this._wrapped=n):new m(n)};"undefined"!=typeof exports?("undefined"!=typeof module&&module.exports&&(exports=module.exports=m),exports._=m):u._=m,m.VERSION="1.8.3";var b=function(n,t,r){if(t===void 0)return n;switch(null==r?3:r){case 1:return function(r){return n.call(t,r)};case 2:return function(r,e){return n.call(t,r,e)};case 3:return function(r,e,u){return n.call(t,r,e,u)};case 4:return function(r,e,u,i){return n.call(t,r,e,u,i)}}return function(){return n.apply(t,arguments)}},x=function(n,t,r){return null==n?m.identity:m.isFunction(n)?b(n,t,r):m.isObject(n)?m.matcher(n):m.property(n)};m.iteratee=function(n,t){return x(n,t,1/0)};var _=function(n,t){return function(r){var e=arguments.length;if(2>e||null==r)return r;for(var u=1;e>u;u++)for(var i=arguments[u],o=n(i),a=o.length,c=0;a>c;c++){var f=o[c];t&&r[f]!==void 0||(r[f]=i[f])}return r}},j=function(n){if(!m.isObject(n))return{};if(y)return y(n);d.prototype=n;var t=new d;return d.prototype=null,t},w=function(n){return function(t){return null==t?void 0:t[n]}},A=Math.pow(2,53)-1,O=w("length"),k=function(n){var t=O(n);return"number"==typeof t&&t>=0&&A>=t};m.each=m.forEach=function(n,t,r){t=b(t,r);var e,u;if(k(n))for(e=0,u=n.length;u>e;e++)t(n[e],e,n);else{var i=m.keys(n);for(e=0,u=i.length;u>e;e++)t(n[i[e]],i[e],n)}return n},m.map=m.collect=function(n,t,r){t=x(t,r);for(var e=!k(n)&&m.keys(n),u=(e||n).length,i=Array(u),o=0;u>o;o++){var a=e?e[o]:o;i[o]=t(n[a],a,n)}return i},m.reduce=m.foldl=m.inject=n(1),m.reduceRight=m.foldr=n(-1),m.find=m.detect=function(n,t,r){var e;return e=k(n)?m.findIndex(n,t,r):m.findKey(n,t,r),e!==void 0&&e!==-1?n[e]:void 0},m.filter=m.select=function(n,t,r){var e=[];return t=x(t,r),m.each(n,function(n,r,u){t(n,r,u)&&e.push(n)}),e},m.reject=function(n,t,r){return m.filter(n,m.negate(x(t)),r)},m.every=m.all=function(n,t,r){t=x(t,r);for(var e=!k(n)&&m.keys(n),u=(e||n).length,i=0;u>i;i++){var o=e?e[i]:i;if(!t(n[o],o,n))return!1}return!0},m.some=m.any=function(n,t,r){t=x(t,r);for(var e=!k(n)&&m.keys(n),u=(e||n).length,i=0;u>i;i++){var o=e?e[i]:i;if(t(n[o],o,n))return!0}return!1},m.contains=m.includes=m.include=function(n,t,r,e){return k(n)||(n=m.values(n)),("number"!=typeof r||e)&&(r=0),m.indexOf(n,t,r)>=0},m.invoke=function(n,t){var r=l.call(arguments,2),e=m.isFunction(t);return m.map(n,function(n){var u=e?t:n[t];return null==u?u:u.apply(n,r)})},m.pluck=function(n,t){return m.map(n,m.property(t))},m.where=function(n,t){return m.filter(n,m.matcher(t))},m.findWhere=function(n,t){return m.find(n,m.matcher(t))},m.max=function(n,t,r){var e,u,i=-1/0,o=-1/0;if(null==t&&null!=n){n=k(n)?n:m.values(n);for(var a=0,c=n.length;c>a;a++)e=n[a],e>i&&(i=e)}else t=x(t,r),m.each(n,function(n,r,e){u=t(n,r,e),(u>o||u===-1/0&&i===-1/0)&&(i=n,o=u)});return i},m.min=function(n,t,r){var e,u,i=1/0,o=1/0;if(null==t&&null!=n){n=k(n)?n:m.values(n);for(var a=0,c=n.length;c>a;a++)e=n[a],i>e&&(i=e)}else t=x(t,r),m.each(n,function(n,r,e){u=t(n,r,e),(o>u||1/0===u&&1/0===i)&&(i=n,o=u)});return i},m.shuffle=function(n){for(var t,r=k(n)?n:m.values(n),e=r.length,u=Array(e),i=0;e>i;i++)t=m.random(0,i),t!==i&&(u[i]=u[t]),u[t]=r[i];return u},m.sample=function(n,t,r){return null==t||r?(k(n)||(n=m.values(n)),n[m.random(n.length-1)]):m.shuffle(n).slice(0,Math.max(0,t))},m.sortBy=function(n,t,r){return t=x(t,r),m.pluck(m.map(n,function(n,r,e){return{value:n,index:r,criteria:t(n,r,e)}}).sort(function(n,t){var r=n.criteria,e=t.criteria;if(r!==e){if(r>e||r===void 0)return 1;if(e>r||e===void 0)return-1}return n.index-t.index}),"value")};var F=function(n){return function(t,r,e){var u={};return r=x(r,e),m.each(t,function(e,i){var o=r(e,i,t);n(u,e,o)}),u}};m.groupBy=F(function(n,t,r){m.has(n,r)?n[r].push(t):n[r]=[t]}),m.indexBy=F(function(n,t,r){n[r]=t}),m.countBy=F(function(n,t,r){m.has(n,r)?n[r]++:n[r]=1}),m.toArray=function(n){return n?m.isArray(n)?l.call(n):k(n)?m.map(n,m.identity):m.values(n):[]},m.size=function(n){return null==n?0:k(n)?n.length:m.keys(n).length},m.partition=function(n,t,r){t=x(t,r);var e=[],u=[];return m.each(n,function(n,r,i){(t(n,r,i)?e:u).push(n)}),[e,u]},m.first=m.head=m.take=function(n,t,r){return null==n?void 0:null==t||r?n[0]:m.initial(n,n.length-t)},m.initial=function(n,t,r){return l.call(n,0,Math.max(0,n.length-(null==t||r?1:t)))},m.last=function(n,t,r){return null==n?void 0:null==t||r?n[n.length-1]:m.rest(n,Math.max(0,n.length-t))},m.rest=m.tail=m.drop=function(n,t,r){return l.call(n,null==t||r?1:t)},m.compact=function(n){return m.filter(n,m.identity)};var S=function(n,t,r,e){for(var u=[],i=0,o=e||0,a=O(n);a>o;o++){var c=n[o];if(k(c)&&(m.isArray(c)||m.isArguments(c))){t||(c=S(c,t,r));var f=0,l=c.length;for(u.length+=l;l>f;)u[i++]=c[f++]}else r||(u[i++]=c)}return u};m.flatten=function(n,t){return S(n,t,!1)},m.without=function(n){return m.difference(n,l.call(arguments,1))},m.uniq=m.unique=function(n,t,r,e){m.isBoolean(t)||(e=r,r=t,t=!1),null!=r&&(r=x(r,e));for(var u=[],i=[],o=0,a=O(n);a>o;o++){var c=n[o],f=r?r(c,o,n):c;t?(o&&i===f||u.push(c),i=f):r?m.contains(i,f)||(i.push(f),u.push(c)):m.contains(u,c)||u.push(c)}return u},m.union=function(){return m.uniq(S(arguments,!0,!0))},m.intersection=function(n){for(var t=[],r=arguments.length,e=0,u=O(n);u>e;e++){var i=n[e];if(!m.contains(t,i)){for(var o=1;r>o&&m.contains(arguments[o],i);o++);o===r&&t.push(i)}}return t},m.difference=function(n){var t=S(arguments,!0,!0,1);return m.filter(n,function(n){return!m.contains(t,n)})},m.zip=function(){return m.unzip(arguments)},m.unzip=function(n){for(var t=n&&m.max(n,O).length||0,r=Array(t),e=0;t>e;e++)r[e]=m.pluck(n,e);return r},m.object=function(n,t){for(var r={},e=0,u=O(n);u>e;e++)t?r[n[e]]=t[e]:r[n[e][0]]=n[e][1];return r},m.findIndex=t(1),m.findLastIndex=t(-1),m.sortedIndex=function(n,t,r,e){r=x(r,e,1);for(var u=r(t),i=0,o=O(n);o>i;){var a=Math.floor((i+o)/2);r(n[a])<u?i=a+1:o=a}return i},m.indexOf=r(1,m.findIndex,m.sortedIndex),m.lastIndexOf=r(-1,m.findLastIndex),m.range=function(n,t,r){null==t&&(t=n||0,n=0),r=r||1;for(var e=Math.max(Math.ceil((t-n)/r),0),u=Array(e),i=0;e>i;i++,n+=r)u[i]=n;return u};var E=function(n,t,r,e,u){if(!(e instanceof t))return n.apply(r,u);var i=j(n.prototype),o=n.apply(i,u);return m.isObject(o)?o:i};m.bind=function(n,t){if(g&&n.bind===g)return g.apply(n,l.call(arguments,1));if(!m.isFunction(n))throw new TypeError("Bind must be called on a function");var r=l.call(arguments,2),e=function(){return E(n,e,t,this,r.concat(l.call(arguments)))};return e},m.partial=function(n){var t=l.call(arguments,1),r=function(){for(var e=0,u=t.length,i=Array(u),o=0;u>o;o++)i[o]=t[o]===m?arguments[e++]:t[o];for(;e<arguments.length;)i.push(arguments[e++]);return E(n,r,this,this,i)};return r},m.bindAll=function(n){var t,r,e=arguments.length;if(1>=e)throw new Error("bindAll must be passed function names");for(t=1;e>t;t++)r=arguments[t],n[r]=m.bind(n[r],n);return n},m.memoize=function(n,t){var r=function(e){var u=r.cache,i=""+(t?t.apply(this,arguments):e);return m.has(u,i)||(u[i]=n.apply(this,arguments)),u[i]};return r.cache={},r},m.delay=function(n,t){var r=l.call(arguments,2);return setTimeout(function(){return n.apply(null,r)},t)},m.defer=m.partial(m.delay,m,1),m.throttle=function(n,t,r){var e,u,i,o=null,a=0;r||(r={});var c=function(){a=r.leading===!1?0:m.now(),o=null,i=n.apply(e,u),o||(e=u=null)};return function(){var f=m.now();a||r.leading!==!1||(a=f);var l=t-(f-a);return e=this,u=arguments,0>=l||l>t?(o&&(clearTimeout(o),o=null),a=f,i=n.apply(e,u),o||(e=u=null)):o||r.trailing===!1||(o=setTimeout(c,l)),i}},m.debounce=function(n,t,r){var e,u,i,o,a,c=function(){var f=m.now()-o;t>f&&f>=0?e=setTimeout(c,t-f):(e=null,r||(a=n.apply(i,u),e||(i=u=null)))};return function(){i=this,u=arguments,o=m.now();var f=r&&!e;return e||(e=setTimeout(c,t)),f&&(a=n.apply(i,u),i=u=null),a}},m.wrap=function(n,t){return m.partial(t,n)},m.negate=function(n){return function(){return!n.apply(this,arguments)}},m.compose=function(){var n=arguments,t=n.length-1;return function(){for(var r=t,e=n[t].apply(this,arguments);r--;)e=n[r].call(this,e);return e}},m.after=function(n,t){return function(){return--n<1?t.apply(this,arguments):void 0}},m.before=function(n,t){var r;return function(){return--n>0&&(r=t.apply(this,arguments)),1>=n&&(t=null),r}},m.once=m.partial(m.before,2);var M=!{toString:null}.propertyIsEnumerable("toString"),I=["valueOf","isPrototypeOf","toString","propertyIsEnumerable","hasOwnProperty","toLocaleString"];m.keys=function(n){if(!m.isObject(n))return[];if(v)return v(n);var t=[];for(var r in n)m.has(n,r)&&t.push(r);return M&&e(n,t),t},m.allKeys=function(n){if(!m.isObject(n))return[];var t=[];for(var r in n)t.push(r);return M&&e(n,t),t},m.values=function(n){for(var t=m.keys(n),r=t.length,e=Array(r),u=0;r>u;u++)e[u]=n[t[u]];return e},m.mapObject=function(n,t,r){t=x(t,r);for(var e,u=m.keys(n),i=u.length,o={},a=0;i>a;a++)e=u[a],o[e]=t(n[e],e,n);return o},m.pairs=function(n){for(var t=m.keys(n),r=t.length,e=Array(r),u=0;r>u;u++)e[u]=[t[u],n[t[u]]];return e},m.invert=function(n){for(var t={},r=m.keys(n),e=0,u=r.length;u>e;e++)t[n[r[e]]]=r[e];return t},m.functions=m.methods=function(n){var t=[];for(var r in n)m.isFunction(n[r])&&t.push(r);return t.sort()},m.extend=_(m.allKeys),m.extendOwn=m.assign=_(m.keys),m.findKey=function(n,t,r){t=x(t,r);for(var e,u=m.keys(n),i=0,o=u.length;o>i;i++)if(e=u[i],t(n[e],e,n))return e},m.pick=function(n,t,r){var e,u,i={},o=n;if(null==o)return i;m.isFunction(t)?(u=m.allKeys(o),e=b(t,r)):(u=S(arguments,!1,!1,1),e=function(n,t,r){return t in r},o=Object(o));for(var a=0,c=u.length;c>a;a++){var f=u[a],l=o[f];e(l,f,o)&&(i[f]=l)}return i},m.omit=function(n,t,r){if(m.isFunction(t))t=m.negate(t);else{var e=m.map(S(arguments,!1,!1,1),String);t=function(n,t){return!m.contains(e,t)}}return m.pick(n,t,r)},m.defaults=_(m.allKeys,!0),m.create=function(n,t){var r=j(n);return t&&m.extendOwn(r,t),r},m.clone=function(n){return m.isObject(n)?m.isArray(n)?n.slice():m.extend({},n):n},m.tap=function(n,t){return t(n),n},m.isMatch=function(n,t){var r=m.keys(t),e=r.length;if(null==n)return!e;for(var u=Object(n),i=0;e>i;i++){var o=r[i];if(t[o]!==u[o]||!(o in u))return!1}return!0};var N=function(n,t,r,e){if(n===t)return 0!==n||1/n===1/t;if(null==n||null==t)return n===t;n instanceof m&&(n=n._wrapped),t instanceof m&&(t=t._wrapped);var u=s.call(n);if(u!==s.call(t))return!1;switch(u){case"[object RegExp]":case"[object String]":return""+n==""+t;case"[object Number]":return+n!==+n?+t!==+t:0===+n?1/+n===1/t:+n===+t;case"[object Date]":case"[object Boolean]":return+n===+t}var i="[object Array]"===u;if(!i){if("object"!=typeof n||"object"!=typeof t)return!1;var o=n.constructor,a=t.constructor;if(o!==a&&!(m.isFunction(o)&&o instanceof o&&m.isFunction(a)&&a instanceof a)&&"constructor"in n&&"constructor"in t)return!1}r=r||[],e=e||[];for(var c=r.length;c--;)if(r[c]===n)return e[c]===t;if(r.push(n),e.push(t),i){if(c=n.length,c!==t.length)return!1;for(;c--;)if(!N(n[c],t[c],r,e))return!1}else{var f,l=m.keys(n);if(c=l.length,m.keys(t).length!==c)return!1;for(;c--;)if(f=l[c],!m.has(t,f)||!N(n[f],t[f],r,e))return!1}return r.pop(),e.pop(),!0};m.isEqual=function(n,t){return N(n,t)},m.isEmpty=function(n){return null==n?!0:k(n)&&(m.isArray(n)||m.isString(n)||m.isArguments(n))?0===n.length:0===m.keys(n).length},m.isElement=function(n){return!(!n||1!==n.nodeType)},m.isArray=h||function(n){return"[object Array]"===s.call(n)},m.isObject=function(n){var t=typeof n;return"function"===t||"object"===t&&!!n},m.each(["Arguments","Function","String","Number","Date","RegExp","Error"],function(n){m["is"+n]=function(t){return s.call(t)==="[object "+n+"]"}}),m.isArguments(arguments)||(m.isArguments=function(n){return m.has(n,"callee")}),"function"!=typeof/./&&"object"!=typeof Int8Array&&(m.isFunction=function(n){return"function"==typeof n||!1}),m.isFinite=function(n){return isFinite(n)&&!isNaN(parseFloat(n))},m.isNaN=function(n){return m.isNumber(n)&&n!==+n},m.isBoolean=function(n){return n===!0||n===!1||"[object Boolean]"===s.call(n)},m.isNull=function(n){return null===n},m.isUndefined=function(n){return n===void 0},m.has=function(n,t){return null!=n&&p.call(n,t)},m.noConflict=function(){return u._=i,this},m.identity=function(n){return n},m.constant=function(n){return function(){return n}},m.noop=function(){},m.property=w,m.propertyOf=function(n){return null==n?function(){}:function(t){return n[t]}},m.matcher=m.matches=function(n){return n=m.extendOwn({},n),function(t){return m.isMatch(t,n)}},m.times=function(n,t,r){var e=Array(Math.max(0,n));t=b(t,r,1);for(var u=0;n>u;u++)e[u]=t(u);return e},m.random=function(n,t){return null==t&&(t=n,n=0),n+Math.floor(Math.random()*(t-n+1))},m.now=Date.now||function(){return(new Date).getTime()};var B={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#x27;","`":"&#x60;"},T=m.invert(B),R=function(n){var t=function(t){return n[t]},r="(?:"+m.keys(n).join("|")+")",e=RegExp(r),u=RegExp(r,"g");return function(n){return n=null==n?"":""+n,e.test(n)?n.replace(u,t):n}};m.escape=R(B),m.unescape=R(T),m.result=function(n,t,r){var e=null==n?void 0:n[t];return e===void 0&&(e=r),m.isFunction(e)?e.call(n):e};var q=0;m.uniqueId=function(n){var t=++q+"";return n?n+t:t},m.templateSettings={evaluate:/<%([\s\S]+?)%>/g,interpolate:/<%=([\s\S]+?)%>/g,escape:/<%-([\s\S]+?)%>/g};var K=/(.)^/,z={"'":"'","\\":"\\","\r":"r","\n":"n","\u2028":"u2028","\u2029":"u2029"},D=/\\|'|\r|\n|\u2028|\u2029/g,L=function(n){return"\\"+z[n]};m.template=function(n,t,r){!t&&r&&(t=r),t=m.defaults({},t,m.templateSettings);var e=RegExp([(t.escape||K).source,(t.interpolate||K).source,(t.evaluate||K).source].join("|")+"|$","g"),u=0,i="__p+='";n.replace(e,function(t,r,e,o,a){return i+=n.slice(u,a).replace(D,L),u=a+t.length,r?i+="'+\n((__t=("+r+"))==null?'':_.escape(__t))+\n'":e?i+="'+\n((__t=("+e+"))==null?'':__t)+\n'":o&&(i+="';\n"+o+"\n__p+='"),t}),i+="';\n",t.variable||(i="with(obj||{}){\n"+i+"}\n"),i="var __t,__p='',__j=Array.prototype.join,"+"print=function(){__p+=__j.call(arguments,'');};\n"+i+"return __p;\n";try{var o=new Function(t.variable||"obj","_",i)}catch(a){throw a.source=i,a}var c=function(n){return o.call(this,n,m)},f=t.variable||"obj";return c.source="function("+f+"){\n"+i+"}",c},m.chain=function(n){var t=m(n);return t._chain=!0,t};var P=function(n,t){return n._chain?m(t).chain():t};m.mixin=function(n){m.each(m.functions(n),function(t){var r=m[t]=n[t];m.prototype[t]=function(){var n=[this._wrapped];return f.apply(n,arguments),P(this,r.apply(m,n))}})},m.mixin(m),m.each(["pop","push","reverse","shift","sort","splice","unshift"],function(n){var t=o[n];m.prototype[n]=function(){var r=this._wrapped;return t.apply(r,arguments),"shift"!==n&&"splice"!==n||0!==r.length||delete r[0],P(this,r)}}),m.each(["concat","join","slice"],function(n){var t=o[n];m.prototype[n]=function(){return P(this,t.apply(this._wrapped,arguments))}}),m.prototype.value=function(){return this._wrapped},m.prototype.valueOf=m.prototype.toJSON=m.prototype.value,m.prototype.toString=function(){return""+this._wrapped},"function"==typeof define&&define.amd&&define("underscore",[],function(){return m})}).call(this);
+
+module.exports.deepClone = function(e) { return e; };
+module.exports.multiplyString = function(e, n) { return e.repeat(n); };
+module.exports.spliceWithArray = function(a, b, c, d) { return a.splice(b, c, ...d); };
+}.toString();
+
+__CACHE['fs-plus'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = require('fs');
+}.toString();
+
+__CACHE['source-map-support'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    install: function() {}
+  };
+}.toString();
+
+__CACHE['season'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    readFileSync: function() {
+      return { menu: [], };
+    },
+    resolve: function() {},
+  };
+}.toString();
+
+__CACHE['grim'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['pathwatcher'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['keyboard-layout-manager.node'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = function() {
+    this.getCurrentKeyboardLayout = function() {
+      return 'com.apple.keylayout.US';
+    };
+  };
+}.toString();
+
+__CACHE['package.json'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['buffer'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['babelrc.json'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['onig_scanner.node'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    OnigScanner: function() {},
+    OnigString: function() {},
+  };
+}.toString();
+
+__CACHE['git.node'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    Repository: function() {},
+  };
+}.toString();
+
+// https://github.com/bolinfest/atom/tree/00ca3251f2764b70f8b05136a94c11d0db85e2a0/standalone/shims/marker-index
+__CACHE['/Users/vjeux/random/atom/node_modules/marker-index/build/Release/marker_index'] = function (exports, require, module, __filename, __dirname, process, global) {
+  const Point = require("./point"); const Range = require("./range"); const { last, extend } = require("underscore-plus"); const { addSet, subtractSet, intersectSet, setEqual } = require("./set-helpers"); let BRANCHING_THRESHOLD = 3; class Node { constructor(children) { this.children = children; this.ids = new Set; this.extent = Point.ZERO; for (let child of this.children) { this.extent = this.extent.traverse(child.extent); addSet(this.ids, child.ids); } } insert(ids, start, end) { let newNodes; let rangeIsEmpty = start.compare(end) === 0; let childEnd = Point.ZERO; let i = 0; while (i < this.children.length) { let newChildren; let child = this.children[i++]; let childStart = childEnd; childEnd = childStart.traverse(child.extent); switch (childEnd.compare(start)) { case -1: var childPrecedesRange = true; break; case 1: childPrecedesRange = false; break; case 0: if (child.hasEmptyRightmostLeaf()) { childPrecedesRange = false; } else { childPrecedesRange = true; if (rangeIsEmpty) { ids = new Set(ids); child.findContaining(child.extent, ids); } } break; } if (childPrecedesRange) { continue; } switch (childStart.compare(end)) { case -1: var childFollowsRange = false; break; case 1: childFollowsRange = true; break; case 0: childFollowsRange = !(child.hasEmptyLeftmostLeaf() || rangeIsEmpty); break; } if (childFollowsRange) { break; } let relativeStart = Point.max(Point.ZERO, start.traversalFrom(childStart)); let relativeEnd = Point.min(child.extent, end.traversalFrom(childStart)); if (newChildren = child.insert(ids, relativeStart, relativeEnd)) { this.children.splice(i - 1, 1, ...newChildren); i += newChildren.length - 1; } if (rangeIsEmpty) { break; } } if (newNodes = this.splitIfNeeded()) { return newNodes; } else { addSet(this.ids, ids); return; } } delete(id) { if (!this.ids.delete(id)) { return; } let i = 0; return (() => { let result = []; while (i < this.children.length) { let item; this.children[i].delete(id); if (!this.mergeChildrenIfNeeded(i - 1)) { item = i++; } result.push(item); } return result; })(); } splice(position, oldExtent, newExtent, exclusiveIds, precedingIds, followingIds) { let oldRangeIsEmpty = oldExtent.isZero(); let spliceOldEnd = position.traverse(oldExtent); let spliceNewEnd = position.traverse(newExtent); let extentAfterChange = this.extent.traversalFrom(spliceOldEnd); this.extent = spliceNewEnd.traverse(Point.max(Point.ZERO, extentAfterChange)); if (position.isZero() && oldRangeIsEmpty) { __guard__(precedingIds, x => x.forEach(id => { if (!exclusiveIds.has(id)) { return this.ids.add(id); } } )); } let i = 0; let childEnd = Point.ZERO; while (i < this.children.length) { let child = this.children[i]; let childStart = childEnd; childEnd = childStart.traverse(child.extent); switch (childEnd.compare(position)) { case -1: var childPrecedesRange = true; break; case 0: childPrecedesRange = !(child.hasEmptyRightmostLeaf() && oldRangeIsEmpty); break; case 1: childPrecedesRange = false; break; } if (!childPrecedesRange) { if (remainderToDelete != null) { if (remainderToDelete.isPositive()) { let previousExtent = child.extent; child.splice(Point.ZERO, remainderToDelete, Point.ZERO); var remainderToDelete = remainderToDelete.traversalFrom(previousExtent); childEnd = childStart.traverse(child.extent); } } else { if (oldRangeIsEmpty) { let left; let left1; var previousChildIds = (left = __guard__(this.children[i - 1], x1 => x1.getRightmostIds())) != null ? left : precedingIds; var nextChildIds = (left1 = __guard__(this.children[i + 1], x2 => x2.getLeftmostIds())) != null ? left1 : followingIds; } let splitNodes = child.splice( position.traversalFrom(childStart), oldExtent, newExtent, exclusiveIds, previousChildIds, nextChildIds ); if (splitNodes) { this.children.splice(i, 1, ...splitNodes); } var remainderToDelete = spliceOldEnd.traversalFrom(childEnd); childEnd = childStart.traverse(child.extent); } } if (!this.mergeChildrenIfNeeded(i - 1)) { i++; } } return this.splitIfNeeded(); } getStart(id) { if (!this.ids.has(id)) { return; } let childEnd = Point.ZERO; for (let child of this.children) { let startRelativeToChild; let childStart = childEnd; childEnd = childStart.traverse(child.extent); if (startRelativeToChild = child.getStart(id)) { return childStart.traverse(startRelativeToChild); } } } getEnd(id) { if (!this.ids.has(id)) { return; } let childEnd = Point.ZERO; for (let child of this.children) { let endRelativeToChild; let childStart = childEnd; childEnd = childStart.traverse(child.extent); if (endRelativeToChild = child.getEnd(id)) { var end = childStart.traverse(endRelativeToChild); } else if (end != null) { break; } } return end; } dump(ids, offset, snapshot) { for (let child of this.children) { if ((!ids) || setsOverlap(ids, child.ids)) { offset = child.dump(ids, offset, snapshot); } else { offset = offset.traverse(child.extent); } } return offset; } findContaining(point, set) { let childEnd = Point.ZERO; for (let child of this.children) { let childStart = childEnd; childEnd = childStart.traverse(child.extent); if (childEnd.compare(point) < 0) { continue; } if (childStart.compare(point) > 0) { break; } child.findContaining(point.traversalFrom(childStart), set); } } findIntersecting(start, end, set) { if (start.isZero() && end.compare(this.extent) === 0) { addSet(set, this.ids); return; } let childEnd = Point.ZERO; for (let child of this.children) { let childStart = childEnd; childEnd = childStart.traverse(child.extent); if (childEnd.compare(start) < 0) { continue; } if (childStart.compare(end) > 0) { break; } child.findIntersecting( Point.max(Point.ZERO, start.traversalFrom(childStart)), Point.min(child.extent, end.traversalFrom(childStart)), set ); } } findStartingAt(position, result, previousIds) { for (let child of this.children) { if (position.isNegative()) { break; } let nextPosition = position.traversalFrom(child.extent); if (!nextPosition.isPositive()) { child.findStartingAt(position, result, previousIds); } previousIds = child.ids; position = nextPosition; } } findEndingAt(position, result) { for (let child of this.children) { if (position.isNegative()) { break; } let nextPosition = position.traversalFrom(child.extent); if (!nextPosition.isPositive()) { child.findEndingAt(position, result); } position = nextPosition; } } hasEmptyRightmostLeaf() { return this.children[this.children.length - 1].hasEmptyRightmostLeaf(); } hasEmptyLeftmostLeaf() { return this.children[0].hasEmptyLeftmostLeaf(); } getLeftmostIds() { return this.children[0].getLeftmostIds(); } getRightmostIds() { return last(this.children).getRightmostIds(); } merge(other) { let childCount = this.children.length + other.children.length; if (childCount <= BRANCHING_THRESHOLD + 1) { if (last(this.children).merge(other.children[0])) { other.children.shift(); childCount--; } if (childCount <= BRANCHING_THRESHOLD) { this.extent = this.extent.traverse(other.extent); addSet(this.ids, other.ids); this.children.push(...other.children); return true; } } return false; } splitIfNeeded() { let branchingRatio; if ((branchingRatio = this.children.length / BRANCHING_THRESHOLD) > 1) { let splitIndex = Math.ceil(branchingRatio); return [new Node(this.children.slice(0, splitIndex)), new Node(this.children.slice(splitIndex))]; } } mergeChildrenIfNeeded(i) { if (__guard__(this.children[i], x => x.merge(this.children[i + 1]))) { this.children.splice(i + 1, 1); return true; } else { return false; } } toString(indentLevel=0) { let next; let indent = ""; let iterable = __range__(0, indentLevel, false); for (let j = 0; j < iterable.length; j++) { let i = iterable[j]; indent += " "; } let ids = []; let values = this.ids.values(); while (!(next = values.next()).done) { ids.push(next.value); } return indent + "Node " + this.extent + " (" + (ids.join(" ")) + ")\n" + (this.children.map(c => c.toString(indentLevel + 2)).join("\n")); } } class Leaf { constructor(extent, ids) { this.extent = extent; this.ids = ids; } insert(ids, start, end) { if (start.isZero() && end.compare(this.extent) === 0) { addSet(this.ids, ids); return; } else { let newIds = new Set(this.ids); addSet(newIds, ids); let newLeaves = []; if (start.isPositive()) { newLeaves.push(new Leaf(start, new Set(this.ids))); } newLeaves.push(new Leaf(end.traversalFrom(start), newIds)); if (this.extent.compare(end) > 0) { newLeaves.push(new Leaf(this.extent.traversalFrom(end), new Set(this.ids))); } return newLeaves; } } delete(id) { return this.ids.delete(id); } splice(position, spliceOldExtent, spliceNewExtent, exclusiveIds, precedingIds, followingIds) { if (position.isZero() && spliceOldExtent.isZero()) { let leftIds = new Set(precedingIds); addSet(leftIds, this.ids); subtractSet(leftIds, exclusiveIds); if (this.extent.isZero()) { precedingIds.forEach(id => { if (!followingIds.has(id)) { return this.ids.delete(id); } } ); } return [new Leaf(spliceNewExtent, leftIds), this]; } else { let spliceOldEnd = position.traverse(spliceOldExtent); let spliceNewEnd = position.traverse(spliceNewExtent); let extentAfterChange = this.extent.traversalFrom(spliceOldEnd); this.extent = spliceNewEnd.traverse(Point.max(Point.ZERO, extentAfterChange)); return; } } getStart(id) { if (this.ids.has(id)) { return Point.ZERO; } } getEnd(id) { if (this.ids.has(id)) { return this.extent; } } dump(ids, offset, snapshot) { let next; let end = offset.traverse(this.extent); let values = this.ids.values(); while (!(next = values.next()).done) { let id = next.value; if ((!ids) || ids.has(id)) { if (snapshot[id] == null) { snapshot[id] = templateRange(); } if (snapshot[id].start == null) { snapshot[id].start = offset; } snapshot[id].end = end; } } return end; } findEndingAt(position, result) { if (position.isEqual(this.extent)) { addSet(result, this.ids); } else if (position.isZero()) { subtractSet(result, this.ids); } } findStartingAt(position, result, previousIds) { if (position.isZero()) { this.ids.forEach(function(id) { if (!previousIds.has(id)) { return result.add(id); } }); } } findContaining(point, set) { return addSet(set, this.ids); } findIntersecting(start, end, set) { return addSet(set, this.ids); } hasEmptyRightmostLeaf() { return this.extent.isZero(); } hasEmptyLeftmostLeaf() { return this.extent.isZero(); } getLeftmostIds() { return this.ids; } getRightmostIds() { return this.ids; } merge(other) { if (setEqual(this.ids, other.ids) || (this.extent.isZero() && other.extent.isZero())) { this.extent = this.extent.traverse(other.extent); addSet(this.ids, other.ids); return true; } else { return false; } } toString(indentLevel=0) { let next; let indent = ""; let iterable = __range__(0, indentLevel, false); for (let j = 0; j < iterable.length; j++) { let i = iterable[j]; indent += " "; } let ids = []; let values = this.ids.values(); while (!(next = values.next()).done) { ids.push(next.value); } return `${indent}Leaf ${this.extent} (${ids.join(" ")})`; } } class MarkerIndex { constructor() { this.clear(); } insert(id, start, end) { let splitNodes; assertValidId(id); this.rangeCache[id] = new Range(start, end); if (splitNodes = this.rootNode.insert(new Set().add(id + ""), start, end)) { return this.rootNode = new Node(splitNodes); } } delete(id) { assertValidId(id); delete this.rangeCache[id]; this.rootNode.delete(id); return this.condenseIfNeeded(); } splice(position, oldExtent, newExtent) { let splitNodes; this.clearRangeCache(); if (splitNodes = this.rootNode.splice(position, oldExtent, newExtent, this.exclusiveIds, new Set, new Set)) { this.rootNode = new Node(splitNodes); } this.condenseIfNeeded(); /* vjeux */ return {touch: []};  } isExclusive(id) { return this.exclusiveIds.has(id); } setExclusive(id, isExclusive) { assertValidId(id); if (isExclusive) { return this.exclusiveIds.add(id); } else { return this.exclusiveIds.delete(id); } } getRange(id) { let start; if (start = this.getStart(id)) { return new Range(start, this.getEnd(id)); } } getStart(id) { if (!this.rootNode.ids.has(id)) { return; } let entry = this.rangeCache[id] != null ? this.rangeCache[id] : (this.rangeCache[id] = templateRange()); return entry.start != null ? entry.start : (entry.start = this.rootNode.getStart(id)); } getEnd(id) { if (!this.rootNode.ids.has(id)) { return; } let entry = this.rangeCache[id] != null ? this.rangeCache[id] : (this.rangeCache[id] = templateRange()); return entry.end != null ? entry.end : (entry.end = this.rootNode.getEnd(id)); } findContaining(start, end) { let containing = new Set; this.rootNode.findContaining(start, containing); if ((end != null) && end.compare(start) !== 0) { let containingEnd = new Set; this.rootNode.findContaining(end, containingEnd); containing.forEach(function(id) { if (!containingEnd.has(id)) { return containing.delete(id); } }); } return containing; } findContainedIn(start, end = start) { let result = this.findStartingIn(start, end); subtractSet(result, this.findIntersecting(end.traverse(Point(0, 1)))); return result; } findIntersecting(start, end = start) { let intersecting = new Set; this.rootNode.findIntersecting(start, end, intersecting); return intersecting; } findStartingIn(start, end) { if (end != null) { var result = this.findIntersecting(start, end); if (start.isPositive()) { if (start.column === 0) { var previousPoint = Point(start.row - 1, Infinity); } else { var previousPoint = Point(start.row, start.column - 1); } subtractSet(result, this.findIntersecting(previousPoint)); } return result; } else { var result = new Set; this.rootNode.findStartingAt(start, result, new Set); return result; } } findEndingIn(start, end) { if (end != null) { var result = this.findIntersecting(start, end); subtractSet(result, this.findIntersecting(end.traverse(Point(0, 1)))); return result; } else { var result = new Set; this.rootNode.findEndingAt(start, result); return result; } } clear() { this.rootNode = new Leaf(Point.INFINITY, new Set); this.exclusiveIds = new Set; return this.clearRangeCache(); } dump(ids) { let result = {}; this.rootNode.dump(ids, Point.ZERO, result); extend(this.rangeCache, result); return result; } /* Section: Private */ clearRangeCache() { return this.rangeCache = {}; } condenseIfNeeded() { while (__guard__(this.rootNode.children, x => x.length) === 1) { this.rootNode = this.rootNode.children[0]; } } }; var assertValidId = function(id) { if (typeof id !== 'string') { throw new TypeError("Marker ID must be a string"); } }; var templateRange = () => Object.create(Range.prototype); var setsOverlap = function(set1, set2) { let next; let values = set1.values(); while (!(next = values.next()).done) { if (set2.has(next.value)) { return true; } } return false; }; function __guard__(value, transform) { return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined; } function __range__(left, right, inclusive) { let range = []; let ascending = left < right; let end = !inclusive ? right : ascending ? right + 1 : right - 1; for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) { range.push(i); } return range; } module.exports = MarkerIndex;
+}.toString();
+__CACHE['/Users/vjeux/random/atom/node_modules/marker-index/build/Release/helpers.js'] = function (exports, require, module, __filename, __dirname, process, global) {
+  let SpliceArrayChunkSize = 100000; module.exports = { spliceArray(originalArray, start, length, insertedArray=[]) { if (insertedArray.length < SpliceArrayChunkSize) { return originalArray.splice(start, length, ...insertedArray); } else { let removedValues = originalArray.splice(start, length); let iterable = __range__(0, insertedArray.length, true); for (let i = 0, step = SpliceArrayChunkSize; i < iterable.length; i += step) { let chunkStart = iterable[i]; let chunkEnd = chunkStart + SpliceArrayChunkSize; let chunk = insertedArray.slice(chunkStart, chunkEnd); originalArray.splice(start + chunkStart, 0, ...chunk); } return removedValues; } }, newlineRegex: /\r\n|\n|\r/g }; function __range__(left, right, inclusive) { let range = []; let ascending = left < right; let end = !inclusive ? right : ascending ? right + 1 : right - 1; for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) { range.push(i); } return range; }
+}.toString();
+__CACHE['/Users/vjeux/random/atom/node_modules/marker-index/build/Release/point.js'] = function (exports, require, module, __filename, __dirname, process, global) {
+  class Point { static initClass() { this.prototype.row = null; this.prototype.column = null; this.ZERO = Object.freeze(new Point(0, 0)); this.INFINITY = Object.freeze(new Point(Infinity, Infinity)); } static fromObject(object, copy) { if (object instanceof Point) { if (copy) { return object.copy(); } else { return object; } } else { if (Array.isArray(object)) { var [row, column] = object; } else { var { row, column } = object; } return new Point(row, column); } } static min(point1, point2) { point1 = this.fromObject(point1); point2 = this.fromObject(point2); if (point1.isLessThanOrEqual(point2)) { return point1; } else { return point2; } } static max(point1, point2) { point1 = Point.fromObject(point1); point2 = Point.fromObject(point2); if (point1.compare(point2) >= 0) { return point1; } else { return point2; } } static assertValid(point) { if (!isNumber(point.row) || !isNumber(point.column)) { throw new TypeError(`Invalid Point: ${point}`); } } constructor(row=0, column=0) { if (!(this instanceof Point)) { return new Point(row, column); } this.row = row; this.column = column; } copy() { return new Point(this.row, this.column); } negate() { return new Point(-this.row, -this.column); } freeze() { return Object.freeze(this); } translate(other) { let {row, column} = Point.fromObject(other); return new Point(this.row + row, this.column + column); } traverse(other) { other = Point.fromObject(other); let row = this.row + other.row; if (other.row === 0) { var column = this.column + other.column; } else { var { column } = other; } return new Point(row, column); } traversalFrom(other) { other = Point.fromObject(other); if (this.row === other.row) { if (this.column === Infinity && other.column === Infinity) { return new Point(0, 0); } else { return new Point(0, this.column - other.column); } } else { return new Point(this.row - other.row, this.column); } } splitAt(column) { if (this.row === 0) { var rightColumn = this.column - column; } else { var rightColumn = this.column; } return [new Point(0, column), new Point(this.row, rightColumn)]; } compare(other) { other = Point.fromObject(other); if (this.row > other.row) { return 1; } else if (this.row < other.row) { return -1; } else { if (this.column > other.column) { return 1; } else if (this.column < other.column) { return -1; } else { return 0; } } } isEqual(other) { if (!other) { return false; } other = Point.fromObject(other); return this.row === other.row && this.column === other.column; } isLessThan(other) { return this.compare(other) < 0; } isLessThanOrEqual(other) { return this.compare(other) <= 0; } isGreaterThan(other) { return this.compare(other) > 0; } isGreaterThanOrEqual(other) { return this.compare(other) >= 0; } isZero() { return this.row === 0 && this.column === 0; } isPositive() { if (this.row > 0) { return true; } else if (this.row < 0) { return false; } else { return this.column > 0; } } isNegative() { if (this.row < 0) { return true; } else if (this.row > 0) { return false; } else { return this.column < 0; } } toArray() { return [this.row, this.column]; } serialize() { return this.toArray(); } toString() { return `(${this.row}, ${this.column})`; } }; Point.initClass(); var isNumber = value => (typeof value === 'number') && (!Number.isNaN(value)); module.exports = Point;
+}.toString();
+__CACHE['/Users/vjeux/random/atom/node_modules/marker-index/build/Release/range.js'] = function (exports, require, module, __filename, __dirname, process, global) {
+  const Point = require('./point'); const { newlineRegex } = require('./helpers'); class Range { static initClass() { this.prototype.start = null; this.prototype.end = null; } static fromObject(object, copy) { if (Array.isArray(object)) { return new this(object[0], object[1]); } else if (object instanceof this) { if (copy) { return object.copy(); } else { return object; } } else { return new this(object.start, object.end); } } static fromText(...args) { if (args.length > 1) { var startPoint = Point.fromObject(args.shift()); } else { var startPoint = new Point(0, 0); } let text = args.shift(); let endPoint = startPoint.copy(); let lines = text.split(newlineRegex); if (lines.length > 1) { let lastIndex = lines.length - 1; endPoint.row += lastIndex; endPoint.column = lines[lastIndex].length; } else { endPoint.column += lines[0].length; } return new this(startPoint, endPoint); } static fromPointWithDelta(startPoint, rowDelta, columnDelta) { startPoint = Point.fromObject(startPoint); let endPoint = new Point(startPoint.row + rowDelta, startPoint.column + columnDelta); return new this(startPoint, endPoint); } static deserialize(array) { if (Array.isArray(array)) { return new this(array[0], array[1]); } else { return new this(); } } constructor(pointA = new Point(0, 0), pointB = new Point(0, 0)) { if (!(this instanceof Range)) { return new Range(pointA, pointB); } pointA = Point.fromObject(pointA); pointB = Point.fromObject(pointB); if (pointA.isLessThanOrEqual(pointB)) { this.start = pointA; this.end = pointB; } else { this.start = pointB; this.end = pointA; } } copy() { return new this.constructor(this.start.copy(), this.end.copy()); } negate() { return new this.constructor(this.start.negate(), this.end.negate()); } serialize() { return [this.start.serialize(), this.end.serialize()]; } isEmpty() { return this.start.isEqual(this.end); } isSingleLine() { return this.start.row === this.end.row; } getRowCount() { return (this.end.row - this.start.row) + 1; } getRows() { return __range__(this.start.row, this.end.row, true); } freeze() { this.start.freeze(); this.end.freeze(); return Object.freeze(this); } union(otherRange) { let start = this.start.isLessThan(otherRange.start) ? this.start : otherRange.start; let end = this.end.isGreaterThan(otherRange.end) ? this.end : otherRange.end; return new this.constructor(start, end); } translate(startDelta, endDelta=startDelta) { return new this.constructor(this.start.translate(startDelta), this.end.translate(endDelta)); } traverse(delta) { return new this.constructor(this.start.traverse(delta), this.end.traverse(delta)); } compare(other) { let value; other = this.constructor.fromObject(other); if (value = this.start.compare(other.start)) { return value; } else { return other.end.compare(this.end); } } isEqual(other) { if (other == null) { return false; } other = this.constructor.fromObject(other); return other.start.isEqual(this.start) && other.end.isEqual(this.end); } coversSameRows(other) { return this.start.row === other.start.row && this.end.row === other.end.row; } intersectsWith(otherRange, exclusive) { if (exclusive) { return !(this.end.isLessThanOrEqual(otherRange.start) || this.start.isGreaterThanOrEqual(otherRange.end)); } else { return !(this.end.isLessThan(otherRange.start) || this.start.isGreaterThan(otherRange.end)); } } containsRange(otherRange, exclusive) { let {start, end} = this.constructor.fromObject(otherRange); return this.containsPoint(start, exclusive) && this.containsPoint(end, exclusive); } containsPoint(point, exclusive) { point = Point.fromObject(point); if (exclusive) { return point.isGreaterThan(this.start) && point.isLessThan(this.end); } else { return point.isGreaterThanOrEqual(this.start) && point.isLessThanOrEqual(this.end); } } intersectsRow(row) { return this.start.row <= row && row <= this.end.row; } intersectsRowRange(startRow, endRow) { if (startRow > endRow) { [startRow, endRow] = [endRow, startRow]; } return this.end.row >= startRow && endRow >= this.start.row; } getExtent() { return this.end.traversalFrom(this.start); } toDelta() { let rows = this.end.row - this.start.row; if (rows === 0) { var columns = this.end.column - this.start.column; } else { var columns = this.end.column; } return new Point(rows, columns); } toString() { return `[${this.start} - ${this.end}]`; } }; Range.initClass(); function __range__(left, right, inclusive) { let range = []; let ascending = left < right; let end = !inclusive ? right : ascending ? right + 1 : right - 1; for (let i = left; ascending ? i < end : i > end; ascending ? i++ : i--) { range.push(i); } return range; } module.exports = Range;
+}.toString();
+__CACHE['/Users/vjeux/random/atom/node_modules/marker-index/build/Release/set-helpers.js'] = function (exports, require, module, __filename, __dirname, process, global) {
+  let setEqual = function(a, b) { let next; if (a.size !== b.size) { return false; } let iterator = a.values(); while (!(next = iterator.next()).done) { if (!b.has(next.value)) { return false; } } return true; }; let subtractSet = function(set, valuesToRemove) { if (set.size > valuesToRemove.size) { return valuesToRemove.forEach(value => set.delete(value)); } else { return set.forEach(function(value) { if (valuesToRemove.has(value)) { return set.delete(value); } }); } }; let addSet = (set, valuesToAdd) => valuesToAdd.forEach(value => set.add(value)); let intersectSet = (set, other) => set.forEach(function(value) { if (!other.has(value)) { return set.delete(value); } }); module.exports = { setEqual, subtractSet, addSet, intersectSet };
+}.toString();
+
+__CACHE['url'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {};
+}.toString();
+
+__CACHE['scrollbar-style-observer.node'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    ScrollbarStyleObserver: function() {
+      this.getPreferredScrollbarStyle = function() {};
+    },
+  };
+}.toString();
+
+__CACHE['compile-cache'] = function (exports, require, module, __filename, __dirname, process, global) {
+  module.exports = {
+    addTranspilerConfigForPath: function() {},
+    removeTranspilerConfigForPath: function() {},
+  };
+}.toString();
+
+</script>
+
+<script>
+var setImmediate = function(e) { return e(); };
+var global = this;
+var process = {
+  env: {},
+  argv: [],
+  binding: function() {},
+  nextTick: requestAnimationFrame.bind(window),
+};
+
+function trimSlash(str) {
+  return str.replace(/\/*$/, '');
+}
+
+function dirname(a) {
+  return (a ? trimSlash(a.replace(/\/[^\/]*$/, '')) : '') + '/';
+}
+
+function basename(a) {
+  return a.replace(/.+\//g, '');
+}
+
+function join(a, b) {
+  if (b.startsWith('./')) {
+    return join(trimSlash(a) + '/', b.slice(2));
+  }
+  if (b.startsWith('../')) {
+    var aUp = trimSlash(a).replace(/\/[^\/]*$/, '') + '/';
+    return join(aUp, b.slice(3));
+  }
+  return trimSlash(a) + '/' + b;
+}
+
+var __MODULE_CACHE = {};
+function require(path) {
+  'use strict';
+
+  function getFromCache(relativePath) {
+    var testPath = basename(relativePath);
+    if (__CACHE[testPath]) { return {code: __CACHE[testPath], absoluteTargetPath: testPath}; }
+    var testPath = relativePath;
+    if (__CACHE[testPath]) { return {code: __CACHE[testPath], absoluteTargetPath: testPath}; }
+    var testPath = relativePath + '.js'
+    if (__CACHE[testPath]) { return {code: __CACHE[testPath], absoluteTargetPath: testPath}; }
+    var testPath = relativePath + '.coffee'
+    if (__CACHE[testPath]) { return {code: __CACHE[testPath], absoluteTargetPath: testPath}; }
+    var testPath = __ALIAS[basename(relativePath)];
+    if (testPath) {
+      return getFromCache(testPath)
+    }
+    return {code: undefined, absoluteTargetPath: undefined};
+  }
+
+  var {code, absoluteTargetPath} = getFromCache(join(dirname(this), path));
+  if (!code) {
+    console.error('Missing ' + path, absoluteTargetPath);
+  }
+
+  if (__MODULE_CACHE[absoluteTargetPath]) {
+    return __MODULE_CACHE[absoluteTargetPath];
+  }
+
+  var fn = eval('(' +
+    code.replace(/\/\/# sourceMappingURL[^\n]+/, '') +
+  ')');
+
+
+  var boundRequire = require.bind(absoluteTargetPath);
+  boundRequire.extensions = require.extensions;
+
+  var moduleSelf = {exports: {}};
+  __MODULE_CACHE[absoluteTargetPath] = moduleSelf.exports;
+  var args = [
+    moduleSelf.exports,
+    boundRequire,
+    moduleSelf,
+    basename(absoluteTargetPath),
+    dirname(absoluteTargetPath),
+    process,
+    global
+  ];
+  fn.apply(moduleSelf.exports, args);
+  __MODULE_CACHE[absoluteTargetPath] = moduleSelf.exports;
+  return moduleSelf.exports;
+}
+require.extensions = {};
+</script>
+<script src="node_modules.js"></script>
+<script>
+__ALIAS['atom'] = '/Users/vjeux/random/atom/exports/atom.js'
+
+
+__ALIAS['brace-expansion'] = '/Users/vjeux/random/atom/node_modules/brace-expansion/index.js';
+__ALIAS['concat-map'] = '/Users/vjeux/random/atom/node_modules/concat-map/index.js';
+__ALIAS['balanced-match'] = '/Users/vjeux/random/atom/node_modules/balanced-match/index.js';
+__ALIAS['atom-slick'] = '/Users/vjeux/random/atom/node_modules/atom-slick/index.js';
+__ALIAS['clear-cut'] = '/Users/vjeux/random/atom/node_modules/clear-cut/index.js';
+__ALIAS['has-flag'] = '/Users/vjeux/random/atom/node_modules/has-flag/index.js';
+__ALIAS['chalk'] = '/Users/vjeux/random/atom/node_modules/chalk/index.js';
+__ALIAS['escape-string-regexp'] = '/Users/vjeux/random/atom/node_modules/escape-string-regexp/index.js';
+__ALIAS['ansi-styles'] = '/Users/vjeux/random/atom/node_modules/ansi-styles/index.js';
+__ALIAS['strip-ansi'] = '/Users/vjeux/random/atom/node_modules/strip-ansi/index.js';
+__ALIAS['ansi-regex'] = '/Users/vjeux/random/atom/node_modules/ansi-regex/index.js';
+__ALIAS['has-ansi'] = '/Users/vjeux/random/atom/node_modules/has-ansi/index.js';
+__ALIAS['supports-color'] = '/Users/vjeux/random/atom/node_modules/supports-color/index.js';
+__ALIAS['postcss-selector-parser/dist'] = '/Users/vjeux/random/atom/node_modules/postcss-selector-parser/dist/index.js';
+__ALIAS['flatten'] = '/Users/vjeux/random/atom/node_modules/flatten/index.js';
+__ALIAS['indexes-of'] = '/Users/vjeux/random/atom/node_modules/indexes-of/index.js';
+__ALIAS['get-parameter-names'] = '/Users/vjeux/random/atom/node_modules/get-parameter-names/index.js';
+__ALIAS['crc'] = '/Users/vjeux/random/atom/node_modules/crc/lib/index.js';
+__ALIAS['diff'] = '/Users/vjeux/random/atom/node_modules/text-buffer/node_modules/diff/lib/index.js';
+__ALIAS['supports-color'] = '/Users/vjeux/random/atom/node_modules/postcss/node_modules/supports-color/index.js';
+</script>
+
+<script>
+window.location.hash = '#' + JSON.stringify({"initialPaths":[],"locationsToOpen":[{}],"windowInitializationScript":"/Users/vjeux/random/atom/src/initialize-application-window.coffee","resourcePath":"/Users/Vjeux/random/atom","devMode":true,"safeMode":false,"profileStartup":false,"clearWindowState":false,"env":{"COLORFGBG":"7;0","TERM_PROGRAM":"iTerm.app","LSCOLORS":"gxdxcxcxfx","TMPDIR":"/var/folders/5g/017j6z2s7cg5g0n630b2hz00nw04y4/T/","__CF_USER_TEXT_ENCODING":"0x2BC013C4:0x0:0x0","ITERM_SESSION_ID":"w0t5p0:A74AD418-5F5E-4447-8E22-A5DED40242FA","SHELL":"/bin/bash","HOME":"/Users/vjeux","_":"/usr/bin/open","TERM_SESSION_ID":"w0t5p0:A74AD418-5F5E-4447-8E22-A5DED40242FA","SSH_AUTH_SOCK":"/private/tmp/com.apple.launchd.hDHGcrvY2G/Listeners","Apple_PubSub_Socket_Render":"/private/tmp/com.apple.launchd.iMrfoLAehM/Render","PAGER":"more","TERM_PROGRAM_VERSION":"3.0.11","SHLVL":"2","EDITOR":"emacs","PATH":"/opt/facebook/nuclide/node-v5.10.0-darwin-x64/bin:/opt/facebook/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/opt/facebook/nuclide/latest/nuclide/pkg/fb-biggrep-cli/bin:/opt/facebook/hg/bin:/usr/local/munki","TERM":"xterm-256color","LOGNAME":"vjeux","XPC_SERVICE_NAME":"com.github.atom.94432.6DEE04ED-AA18-4F65-9075-A74956D09A28","LANG":"en_US.UTF-8","ATOM_DEV_RESOURCE_PATH":"/Users/Vjeux/random/atom","HISTCONTROL":"ignoreboth","ITERM_PROFILE":"Default","USER":"vjeux","XPC_FLAGS":"0x0","ATOM_PATH":"/Users/vjeux/random/atom/out","PWD":"/Users/vjeux/random/atom/standalone","GOOGLE_API_KEY":"AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q","ATOM_HOME":"/Users/vjeux/.atom"},"appVersion":"1.13.0-dev-4ce0f5c","atomHome":"/Users/vjeux/.atom","shellLoadTime":373});
+var initialize = require.call(
+  '/Users/vjeux/random/atom/src/',
+  'initialize-application-window.coffee'
+);
+initialize({blobStore: null}).then(function () {
+  require.call('/Users/vjeux/random/atom/src/', 'electron').ipcRenderer.send('window-command', 'window:loaded')
+})
+</script>

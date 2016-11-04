@@ -9,6 +9,8 @@ function computeHash (contents) {
   return crypto.createHash('sha1').update(contents, 'utf8').digest('hex')
 }
 
+window.__COMPILED = {};
+
 class NativeCompileCache {
   constructor () {
     this.cacheStore = null
@@ -100,6 +102,10 @@ class NativeCompileCache {
         }
       }
       let args = [moduleSelf.exports, require, moduleSelf, filename, dirname, process, global]
+
+      // require('fs').writeFileSync('/Users/vjeux/random/atom/standalone/cache.js', '__CACHE = ' + JSON.stringify(__COMPILED, null, 2))
+      __COMPILED[filename] = compiledWrapper.toString();
+//      console.log(filename);
       return compiledWrapper.apply(moduleSelf.exports, args)
     }
   }
